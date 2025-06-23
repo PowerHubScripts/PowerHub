@@ -1,0 +1,142 @@
+local player = game.Players.LocalPlayer
+local userInput = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+
+-- Create Open Button (initially hidden)
+local openButton = Instance.new("TextButton")
+openButton.Name = "OpenPowerHub"
+openButton.Size = UDim2.new(0, 120, 0, 40)
+openButton.Position = UDim2.new(0.5, -60, 0.9, 0)
+openButton.BackgroundColor3 = Color3.fromRGB(70, 140, 255)
+openButton.Text = "Open PowerHub"
+openButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+openButton.TextScaled = true
+openButton.Font = Enum.Font.GothamBold
+openButton.Visible = false
+openButton.Parent = game.CoreGui
+
+local function createPowerHub()
+	local gui = Instance.new("ScreenGui", game.CoreGui)
+	gui.Name = "PowerHubGui"
+	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+	local frame = Instance.new("Frame", gui)
+	frame.Size = UDim2.new(0, 300, 0, 260)
+	frame.Position = UDim2.new(0.5, -150, 0.5, -130)
+	frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	frame.BorderSizePixel = 0
+	frame.Active = true
+
+	local topBar = Instance.new("Frame", frame)
+	topBar.Size = UDim2.new(1, 0, 0, 40)
+	topBar.BackgroundColor3 = Color3.fromRGB(70, 140, 255)
+	topBar.BorderSizePixel = 0
+
+	local title = Instance.new("TextLabel", topBar)
+	title.Size = UDim2.new(1, 0, 1, 0)
+	title.BackgroundTransparency = 1
+	title.Text = "PowerHub"
+	title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	title.Font = Enum.Font.GothamBold
+	title.TextScaled = true
+
+	local function createButton(text, posY)
+		local btn = Instance.new("TextButton", frame)
+		btn.Size = UDim2.new(1, -20, 0, 40)
+		btn.Position = UDim2.new(0, 10, 0, posY)
+		btn.BackgroundColor3 = Color3.fromRGB(70, 140, 255)
+		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		btn.Text = text
+		btn.Font = Enum.Font.Gotham
+		btn.TextScaled = true
+		return btn
+	end
+
+	local noclip = false
+	local noclipConn
+	local noclipBtn = createButton("NoClip (Off)", 50)
+	noclipBtn.MouseButton1Click:Connect(function()
+		noclip = not noclip
+		noclipBtn.Text = "NoClip (" .. (noclip and "On" or "Off") .. ")"
+		if noclip then
+			noclipConn = runService.Stepped:Connect(function()
+				local char = player.Character
+				if char then
+					for _, part in pairs(char:GetDescendants()) do
+						if part:IsA("BasePart") then part.CanCollide = false end
+					end
+				end
+			end)
+		elseif noclipConn then
+			noclipConn:Disconnect()
+		end
+	end)
+
+	local jump = false
+	local jumpConn
+	local jumpBtn = createButton("Infinite Jump (Off)", 95)
+	jumpBtn.MouseButton1Click:Connect(function()
+		jump = not jump
+		jumpBtn.Text = "Infinite Jump (" .. (jump and "On" or "Off") .. ")"
+		if jump then
+			jumpConn = userInput.JumpRequest:Connect(function()
+				local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+				if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+			end)
+		elseif jumpConn then
+			jumpConn:Disconnect()
+		end
+	end)
+
+	local speed = false
+	local speedBtn = createButton("Speed (Off)", 140)
+	speedBtn.MouseButton1Click:Connect(function()
+		speed = not speed
+		speedBtn.Text = "Speed (" .. (speed and "On" or "Off") .. ")"
+		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if hum then hum.WalkSpeed = speed and 25 or 16 end
+	end)
+
+	local closeBtn = createButton("Close", 185)
+	closeBtn.MouseButton1Click:Connect(function()
+		gui:Destroy()
+		openButton.Visible = true
+	end)
+
+	-- Dragging Logic
+	local dragging, startPos, startMousePos
+
+	topBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			startPos = frame.Position
+			startMousePos = input.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	userInput.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = input.Position - startMousePos
+			frame.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+-- Open Button logic
+openButton.MouseButton1Click:Connect(function()
+	openButton.Visible = false
+	createPowerHub()
+end)
+
+-- Create the GUI initially
+createPowerHub()
