@@ -9,7 +9,7 @@ local gui = Instance.new("ScreenGui", lp:WaitForChild("PlayerGui"))
 gui.Name = "PowerHub"
 gui.ResetOnSpawn = false
 
--- Toggle Button (Circular)
+-- Toggle Button
 local toggle = Instance.new("TextButton")
 toggle.Name = "Toggle"
 toggle.Size = UDim2.new(0, 50, 0, 50)
@@ -22,10 +22,10 @@ toggle.BorderSizePixel = 0
 toggle.Parent = gui
 Instance.new("UICorner", toggle)
 
--- Main Panel (Rectangular)
+-- Main Panel
 local panel = Instance.new("Frame")
-panel.Size = UDim2.new(0, 200, 0, 150)
-panel.Position = UDim2.new(0, 80, 0.5, -75)
+panel.Size = UDim2.new(0, 200, 0, 280)
+panel.Position = UDim2.new(0, 80, 0.5, -140)
 panel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 panel.BorderSizePixel = 0
 panel.Visible = false
@@ -45,7 +45,7 @@ title.TextSize = 20
 -- God Mode Button
 local godBtn = Instance.new("TextButton", panel)
 godBtn.Size = UDim2.new(1, -20, 0, 40)
-godBtn.Position = UDim2.new(0, 10, 0, 50)
+godBtn.Position = UDim2.new(0, 10, 0, 40)
 godBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 godBtn.TextColor3 = Color3.new(1, 1, 1)
 godBtn.Font = Enum.Font.GothamBold
@@ -53,18 +53,53 @@ godBtn.Text = "Activate God Mode"
 godBtn.TextSize = 16
 Instance.new("UICorner", godBtn)
 
--- God Mode Logic
+-- WalkSpeed Button
+local speedBtn = Instance.new("TextButton", panel)
+speedBtn.Size = UDim2.new(1, -20, 0, 40)
+speedBtn.Position = UDim2.new(0, 10, 0, 90)
+speedBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+speedBtn.TextColor3 = Color3.new(1, 1, 1)
+speedBtn.Font = Enum.Font.GothamBold
+speedBtn.Text = "WalkSpeed (16)"
+speedBtn.TextSize = 16
+Instance.new("UICorner", speedBtn)
+
+-- Reset Button
+local resetBtn = Instance.new("TextButton", panel)
+resetBtn.Size = UDim2.new(1, -20, 0, 40)
+resetBtn.Position = UDim2.new(0, 10, 0, 140)
+resetBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+resetBtn.TextColor3 = Color3.new(1, 1, 1)
+resetBtn.Font = Enum.Font.GothamBold
+resetBtn.Text = "Reset (Keep Position)"
+resetBtn.TextSize = 16
+Instance.new("UICorner", resetBtn)
+
+-- Teleport Tool Button
+local tpBtn = Instance.new("TextButton", panel)
+tpBtn.Size = UDim2.new(1, -20, 0, 40)
+tpBtn.Position = UDim2.new(0, 10, 0, 190)
+tpBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+tpBtn.TextColor3 = Color3.new(1, 1, 1)
+tpBtn.Font = Enum.Font.GothamBold
+tpBtn.Text = "Get Teleport Tool"
+tpBtn.TextSize = 16
+Instance.new("UICorner", tpBtn)
+
+-- Variables
 local active = false
 local allowGodMode = true
+local speedOptions = {16, 50, 75, 100, 150, 200, 250, 300, 350, 400, 450, 500}
+local speedIndex = 1
+local savedPos = nil
 
+-- God Mode Function
 local function enableGodMode()
 	if active or not allowGodMode then return end
 	active = true
 
-	-- Speed Boost
-	hum.WalkSpeed = 150
+	hum.WalkSpeed = speedOptions[speedIndex]
 
-	-- Noclip
 	rs.Stepped:Connect(function()
 		if active and lp.Character then
 			for _, part in pairs(lp.Character:GetDescendants()) do
@@ -75,59 +110,107 @@ local function enableGodMode()
 		end
 	end)
 
-	-- Infinite Jump
 	uis.JumpRequest:Connect(function()
 		if active and hum then
 			hum:ChangeState(Enum.HumanoidStateType.Jumping)
 		end
 	end)
 
-	-- Highlight Other Players
 	rs.RenderStepped:Connect(function()
 		if not active then return end
 		for _, plr in pairs(game.Players:GetPlayers()) do
 			if plr ~= lp and plr.Character and not plr.Character:FindFirstChild("Highlight") then
-				local highlight = Instance.new("Highlight")
-				highlight.FillColor = Color3.fromRGB(255, 0, 0)
-				highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-				highlight.FillTransparency = 0.5
-				highlight.OutlineTransparency = 0
-				highlight.Parent = plr.Character
+				local h = Instance.new("Highlight")
+				h.FillColor = Color3.fromRGB(255, 0, 0)
+				h.OutlineColor = Color3.fromRGB(255, 255, 255)
+				h.FillTransparency = 0.5
+				h.OutlineTransparency = 0
+				h.Parent = plr.Character
 			end
 		end
 	end)
 end
 
--- Toggle GUI visibility
+-- Button Clicks
 toggle.MouseButton1Click:Connect(function()
 	panel.Visible = not panel.Visible
 end)
 
--- God Mode button click
 godBtn.MouseButton1Click:Connect(function()
 	if allowGodMode then
 		enableGodMode()
 	end
 end)
 
--- On player death
+speedBtn.MouseButton1Click:Connect(function()
+	speedIndex += 1
+	if speedIndex > #speedOptions then
+		speedIndex = 1
+	end
+	local newSpeed = speedOptions[speedIndex]
+	hum.WalkSpeed = newSpeed
+	speedBtn.Text = "WalkSpeed (" .. newSpeed .. ")"
+end)
+
+resetBtn.MouseButton1Click:Connect(function()
+	local root = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	savedPos = root.Position
+	local humanoid = lp.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.Health = 0
+	end
+end)
+
+tpBtn.MouseButton1Click:Connect(function()
+	if lp.Backpack:FindFirstChild("PowerHub_TeleportTool") then return end
+
+	local tool = Instance.new("Tool")
+	tool.RequiresHandle = false
+	tool.Name = "PowerHub_TeleportTool"
+	tool.Parent = lp.Backpack
+
+	tool.Activated:Connect(function()
+		local mouse = lp:GetMouse()
+		if mouse and mouse.Hit then
+			local pos = mouse.Hit.Position
+			local char = lp.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				char.HumanoidRootPart.CFrame = CFrame.new(pos + Vector3.new(0, 5, 0))
+			end
+		end
+	end)
+end)
+
+-- Death and Respawn Handling
 local function onDeath()
 	allowGodMode = false
 	active = false
 	godBtn.Text = "Turn on God Mode"
 	godBtn.TextColor3 = Color3.fromRGB(200, 0, 0)
+	speedIndex = 1
+	speedBtn.Text = "WalkSpeed (16)"
 end
 
--- On respawn: unlock God Mode button again
-local function onRespawn(char)
-	char:WaitForChild("Humanoid")
-	hum = char.Humanoid
+local function onRespawn(newChar)
+	hum = newChar:WaitForChild("Humanoid")
 	active = false
 	allowGodMode = true
 	godBtn.Text = "Activate God Mode"
 	godBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	speedIndex = 1
+	speedBtn.Text = "WalkSpeed (16)"
+
+	if savedPos then
+		local hrp = newChar:WaitForChild("HumanoidRootPart")
+		hrp.CFrame = CFrame.new(savedPos)
+		savedPos = nil
+	end
+
+	if not lp.PlayerGui:FindFirstChild("PowerHub") then
+		gui.Parent = lp:WaitForChild("PlayerGui")
+	end
 end
 
--- Connect death and respawn events
 hum.Died:Connect(onDeath)
 lp.CharacterAdded:Connect(onRespawn)
