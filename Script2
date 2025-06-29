@@ -3,6 +3,7 @@ local char = lp.Character or lp.CharacterAdded:Wait()
 local hum = char:WaitForChild("Humanoid")
 local uis = game:GetService("UserInputService")
 local rs = game:GetService("RunService")
+local lighting = game:GetService("Lighting")
 
 -- GUI
 local gui = Instance.new("ScreenGui", lp:WaitForChild("PlayerGui"))
@@ -24,8 +25,8 @@ Instance.new("UICorner", toggle)
 
 -- Main Panel
 local panel = Instance.new("Frame")
-panel.Size = UDim2.new(0, 200, 0, 280)
-panel.Position = UDim2.new(0, 80, 0.5, -140)
+panel.Size = UDim2.new(0, 200, 0, 320)
+panel.Position = UDim2.new(0, 80, 0.5, -160)
 panel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 panel.BorderSizePixel = 0
 panel.Visible = false
@@ -85,6 +86,17 @@ tpBtn.Font = Enum.Font.GothamBold
 tpBtn.Text = "Get Teleport Tool"
 tpBtn.TextSize = 16
 Instance.new("UICorner", tpBtn)
+
+-- Fullbright Button
+local fbBtn = Instance.new("TextButton", panel)
+fbBtn.Size = UDim2.new(1, -20, 0, 40)
+fbBtn.Position = UDim2.new(0, 10, 0, 240)
+fbBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+fbBtn.TextColor3 = Color3.new(1, 1, 1)
+fbBtn.Font = Enum.Font.GothamBold
+fbBtn.Text = "Fullbright"
+fbBtn.TextSize = 16
+Instance.new("UICorner", fbBtn)
 
 -- Variables
 local active = false
@@ -164,12 +176,10 @@ end)
 
 tpBtn.MouseButton1Click:Connect(function()
 	if lp.Backpack:FindFirstChild("PowerHub_TeleportTool") then return end
-
 	local tool = Instance.new("Tool")
 	tool.RequiresHandle = false
 	tool.Name = "PowerHub_TeleportTool"
 	tool.Parent = lp.Backpack
-
 	tool.Activated:Connect(function()
 		local mouse = lp:GetMouse()
 		if mouse and mouse.Hit then
@@ -180,6 +190,13 @@ tpBtn.MouseButton1Click:Connect(function()
 			end
 		end
 	end)
+end)
+
+fbBtn.MouseButton1Click:Connect(function()
+	lighting.Brightness = 2
+	lighting.ClockTime = 14
+	lighting.FogEnd = 100000
+	lighting.GlobalShadows = false
 end)
 
 -- Death and Respawn Handling
